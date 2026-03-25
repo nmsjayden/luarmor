@@ -6,13 +6,15 @@
 (function () {
   const DEFAULT_KEY = "-dsYICZJAvKVC";
 
+  const BASE_PATH = "/" + window.location.pathname.split("/")[1];
+
   const params = new URLSearchParams(window.location.search);
   const hasKey = params.has("for");
-	
+
   const isGetKey = window.location.pathname.includes("/get_key");
 
   if (!isGetKey || !hasKey) {
-    const newUrl = "/luarmor/get_key?for=" + DEFAULT_KEY;
+    const newUrl = BASE_PATH + "/get_key?for=" + DEFAULT_KEY;
     history.replaceState({}, "", newUrl);
   }
 })();
@@ -631,7 +633,8 @@ document.addEventListener('DOMContentLoaded', function() {
   const user = getGithubUser();
   if (!user) return;
 
-  const BASE = "https://raw.githubusercontent.com/" + user + "/luarmor/refs/heads/main/";
+  const repoName = window.location.pathname.split('/')[1]; // DeobLuarmor
+  const BASE = "https://raw.githubusercontent.com/" + user + "/" + repoName + "/refs/heads/main/";
   const PROXY = "https://luarmor.yd3n-s3rn4.workers.dev";
 
   function handleUrl(url) {
