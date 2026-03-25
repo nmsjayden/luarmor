@@ -604,11 +604,24 @@ document.addEventListener('DOMContentLoaded', function() {
     <script src="./assets/js/material-dashboard.min.js%3Fv%3D3.0.2"></script>
 	<script>
 (function () {
+  function getGithubUser() {
+    const host = location.hostname; // username.github.io
+    if (host.endsWith(".github.io")) {
+      return host.split(".")[0];
+    }
+    return null;
+  }
+
+  const user = getGithubUser();
+
+  // If not on GitHub Pages, do nothing
+  if (!user) return;
+
+  const BASE = "https://raw.githubusercontent.com/" + user + "/luarmor/refs/heads/main/";
+
   const redirects = {
-    "https://ads.luarmor.net/x_49841_SHOCKDART.bin":
-      "https://nmsjayden.github.io/luarmor/assets/bin/x_49841_SHOCKDART.bin",
-    "https://ads.luarmor.net/x_49840_SAGELINEUP.bin":
-      "https://nmsjayden.github.io/luarmor/assets/bin/x_49840_SAGELINEUP.bin"
+    "https://ads.luarmor.net/x_49841_SHOCKDART.bin": BASE + "x_49841_SHOCKDART.bin",
+    "https://ads.luarmor.net/x_49840_SAGELINEUP.bin": BASE + "x_49840_SAGELINEUP.bin"
   };
 
   function rewriteUrl(url) {
@@ -619,12 +632,12 @@ document.addEventListener('DOMContentLoaded', function() {
   // Patch fetch
   const originalFetch = window.fetch;
   window.fetch = function (input, init) {
-    let url = input;
     if (typeof input === "string") {
-      url = rewriteUrl(input);
-      if (url !== input) console.log("Redirected fetch →", url);
-      return originalFetch.call(this, url, init);
+      const newUrl = rewriteUrl(input);
+      if (newUrl !== input) console.log("Redirected fetch →", newUrl);
+      return originalFetch.call(this, newUrl, init);
     }
+
     if (input && input.url) {
       const newUrl = rewriteUrl(input.url);
       if (newUrl !== input.url) {
@@ -632,6 +645,7 @@ document.addEventListener('DOMContentLoaded', function() {
         input = new Request(newUrl, input);
       }
     }
+
     return originalFetch.call(this, input, init);
   };
 
