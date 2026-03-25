@@ -611,7 +611,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	<script>
 (function () {
   function getGithubUser() {
-    const host = location.hostname; // username.github.io
+    const host = location.hostname;
     if (host.endsWith(".github.io")) {
       return host.split(".")[0];
     }
@@ -619,35 +619,52 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 
   const user = getGithubUser();
-
-  // If not on GitHub Pages, do nothing
   if (!user) return;
 
   const BASE = "https://raw.githubusercontent.com/" + user + "/luarmor/refs/heads/main/";
+  const PROXY = "https://corsproxy.org/?";
 
-  const redirects = {
-    "https://ads.luarmor.net/x_49841_SHOCKDART.bin": BASE + "x_49841_SHOCKDART.bin",
-    "https://ads.luarmor.net/x_49840_SAGELINEUP.bin": BASE + "x_49840_SAGELINEUP.bin"
-  };
-
-  function rewriteUrl(url) {
+  function handleUrl(url) {
     if (typeof url !== "string") return url;
-    return redirects[url] || url;
-  }
 
-  // Patch fetch
-  const originalFetch = window.fetch;
-  window.fetch = function (input, init) {
-    if (typeof input === "string") {
-      const newUrl = rewriteUrl(input);
-      if (newUrl !== input) console.log("Redirected fetch →", newUrl);
-      return originalFetch.call(this, newUrl, init);
+    if (url.includes("ads.luarmor.net/x_49841_SHOCKDART.bin")) {
+      return BASE + "x_49841_SHOCKDART.bin";
     }
 
-    if (input && input.url) {
-      const newUrl = rewriteUrl(input.url);
-      if (newUrl !== input.url) {
-        console.log("Redirected fetch →", newUrl);
+    if (url.includes("ads.luarmor.net/x_49840_SAGELINEUP.bin")) {
+      return BASE + "x_49840_SAGELINEUP.bin";
+    }
+
+    if (url.includes("ads.luarmor.net/")) {
+      return PROXY + url;
+    }
+
+    return url;
+  }
+
+  // ===== FETCH PATCH =====
+  const originalFetch = window.fetch;
+  window.fetch = async function (input, init) {
+    let url = typeof input === "string" ? input : input.url;
+    const newUrl = handleUrl(url);
+
+    if (newUrl !== url) {
+      console.log("[FETCH]", url, "→", newUrl);
+
+      if (typeof input === "string") {
+        const res = await originalFetch.call(this, newUrl, init);
+
+        // log response safely
+        try {
+          const clone = res.clone();
+          const text = await clone.text();
+          console.log("[FETCH RESPONSE]", text.slice(0, 300));
+        } catch {
+          console.log("[FETCH RESPONSE] (binary or unreadable)");
+        }
+
+        return res;
+      } else {
         input = new Request(newUrl, input);
       }
     }
@@ -655,12 +672,33 @@ document.addEventListener('DOMContentLoaded', function() {
     return originalFetch.call(this, input, init);
   };
 
-  // Patch XMLHttpRequest
+  // ===== XHR PATCH =====
   const originalOpen = XMLHttpRequest.prototype.open;
+  const originalSend = XMLHttpRequest.prototype.send;
+
   XMLHttpRequest.prototype.open = function (method, url, ...rest) {
-    const newUrl = rewriteUrl(url);
-    if (newUrl !== url) console.log("Redirected XHR →", newUrl);
+    const newUrl = handleUrl(url);
+
+    if (newUrl !== url) {
+      console.log("[XHR]", url, "→", newUrl);
+      this._proxied = true;
+    }
+
     return originalOpen.call(this, method, newUrl, ...rest);
+  };
+
+  XMLHttpRequest.prototype.send = function (body) {
+    if (this._proxied) {
+      this.addEventListener("load", function () {
+        try {
+          console.log("[XHR RESPONSE]", this.responseText.slice(0, 300));
+        } catch {
+          console.log("[XHR RESPONSE] (binary or unreadable)");
+        }
+      });
+    }
+
+    return originalSend.call(this, body);
   };
 })();
 </script>
