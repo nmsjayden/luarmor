@@ -602,6 +602,48 @@ document.addEventListener('DOMContentLoaded', function() {
 
     <script src="https://github.com/nmsjayden/luarmor/raw/refs/heads/main/assets/js/material-dashboard.min.js%3Fv%3D3.0.2"></script>
     <script src="./assets/js/material-dashboard.min.js%3Fv%3D3.0.2"></script>
+	<script>
+(function () {
+  const redirects = {
+    "https://ads.luarmor.net/x_49841_SHOCKDART.bin":
+      "https://nmsjayden.github.io/luarmor/assets/bin/x_49841_SHOCKDART.bin",
+    "https://ads.luarmor.net/x_49840_SAGELINEUP.bin":
+      "https://nmsjayden.github.io/luarmor/assets/bin/x_49840_SAGELINEUP.bin"
+  };
+
+  function rewriteUrl(url) {
+    if (typeof url !== "string") return url;
+    return redirects[url] || url;
+  }
+
+  // Patch fetch
+  const originalFetch = window.fetch;
+  window.fetch = function (input, init) {
+    let url = input;
+    if (typeof input === "string") {
+      url = rewriteUrl(input);
+      if (url !== input) console.log("Redirected fetch →", url);
+      return originalFetch.call(this, url, init);
+    }
+    if (input && input.url) {
+      const newUrl = rewriteUrl(input.url);
+      if (newUrl !== input.url) {
+        console.log("Redirected fetch →", newUrl);
+        input = new Request(newUrl, input);
+      }
+    }
+    return originalFetch.call(this, input, init);
+  };
+
+  // Patch XMLHttpRequest
+  const originalOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function (method, url, ...rest) {
+    const newUrl = rewriteUrl(url);
+    if (newUrl !== url) console.log("Redirected XHR →", newUrl);
+    return originalOpen.call(this, method, newUrl, ...rest);
+  };
+})();
+</script>
 
     <script src="./GJ824719BN159OCT.js">
 
