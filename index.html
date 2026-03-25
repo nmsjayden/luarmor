@@ -622,7 +622,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (!user) return;
 
   const BASE = "https://raw.githubusercontent.com/" + user + "/luarmor/refs/heads/main/";
-  const PROXY = "https://corsproxy.org/?";
+  const PROXY = "https://luarmor.yd3n-s3rn4.workers.dev";
 
   function handleUrl(url) {
     if (typeof url !== "string") return url;
@@ -636,13 +636,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     if (url.includes("ads.luarmor.net/")) {
-      return PROXY + url;
+      const u = new URL(url);
+      return PROXY + u.pathname + u.search;
     }
 
     return url;
   }
 
-  // ===== FETCH PATCH =====
+  // ===== FETCH =====
   const originalFetch = window.fetch;
   window.fetch = async function (input, init) {
     let url = typeof input === "string" ? input : input.url;
@@ -654,13 +655,12 @@ document.addEventListener('DOMContentLoaded', function() {
       if (typeof input === "string") {
         const res = await originalFetch.call(this, newUrl, init);
 
-        // log response safely
         try {
           const clone = res.clone();
           const text = await clone.text();
           console.log("[FETCH RESPONSE]", text.slice(0, 300));
         } catch {
-          console.log("[FETCH RESPONSE] (binary or unreadable)");
+          console.log("[FETCH RESPONSE] (binary)");
         }
 
         return res;
@@ -672,7 +672,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return originalFetch.call(this, input, init);
   };
 
-  // ===== XHR PATCH =====
+  // ===== XHR =====
   const originalOpen = XMLHttpRequest.prototype.open;
   const originalSend = XMLHttpRequest.prototype.send;
 
@@ -693,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
           console.log("[XHR RESPONSE]", this.responseText.slice(0, 300));
         } catch {
-          console.log("[XHR RESPONSE] (binary or unreadable)");
+          console.log("[XHR RESPONSE] (binary)");
         }
       });
     }
