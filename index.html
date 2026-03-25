@@ -3,10 +3,20 @@
 
 <head>
 	<script>
-    if (location.pathname === "/luarmor/" || location.pathname.endsWith("index.html")) {
-        window.history.replaceState({}, "", "/luarmor/get_key?for=-dsYICZJAvKVC");
-    }
-    </script>
+(function () {
+  const DEFAULT_KEY = "-dsYICZJAvKVC";
+
+  const params = new URLSearchParams(window.location.search);
+  const hasKey = params.has("for");
+	
+  const isGetKey = window.location.pathname.includes("/get_key");
+
+  if (!isGetKey || !hasKey) {
+    const newUrl = "/luarmor/get_key?for=" + DEFAULT_KEY;
+    history.replaceState({}, "", newUrl);
+  }
+})();
+	</script>
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
