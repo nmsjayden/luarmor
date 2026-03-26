@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script>
+  (function () {
+    const parts = window.location.pathname.split("/");
+    const basePath = "/" + parts[1];
+    const params = new URLSearchParams(window.location.search);
+    const key = params.get("for");
+
+    if (key) {
+      try { sessionStorage.setItem("luarmor_key", key); } catch {}
+    }
+
+    history.replaceState({}, "", basePath + "/get_key?for=" + (key || ""));
+
+    fetch(basePath + "/")
+      .then(r => r.text())
+      .then(html => {
+        const base = `<base href="${window.location.origin + basePath + "/"}">`;
+        html = html.replace("<head>", "<head>" + base);
+        document.open();
+        document.write(html);
+        document.close();
+      });
+  })();
+  </script>
+</head>
+<body></body>
+</html>
