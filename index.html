@@ -5,18 +5,19 @@
 	<script>
 (function () {
   const DEFAULT_KEY = "-dsYICZJAvKVC";
-
-  const BASE_PATH = "/" + window.location.pathname.split("/")[1];
-
+  const parts = window.location.pathname.split("/");
+  const basePath = "/" + parts[1];
   const params = new URLSearchParams(window.location.search);
-  const hasKey = params.has("for");
 
-  const isGetKey = window.location.pathname.includes("/get_key");
-
-  if (!isGetKey || !hasKey) {
-    const newUrl = BASE_PATH + "/get_key?for=" + DEFAULT_KEY;
-    history.replaceState({}, "", newUrl);
+  let key = params.get("for");
+  if (!key) {
+    try { key = sessionStorage.getItem("luarmor_key"); } catch {}
   }
+  if (!key) key = DEFAULT_KEY;
+  try { sessionStorage.setItem("luarmor_key", key); } catch {}
+
+  // Always show the clean /get_key?for=... URL regardless of where we came from
+  history.replaceState({}, "", basePath + "/get_key?for=" + key);
 })();
 	</script>
 
